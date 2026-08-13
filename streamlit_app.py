@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import html
-
 import streamlit as st
 
 from model import MODEL, predict, validate_plausibility
@@ -36,17 +34,13 @@ st.markdown(
     h1 { font-size: clamp(2.35rem, 5vw, 4.4rem) !important; line-height: 1.02 !important; }
     .eyebrow { color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
     .lead { color: var(--muted); font-size: 1.08rem; line-height: 1.65; max-width: 760px; }
-    .chip-row { display: flex; gap: .55rem; flex-wrap: wrap; margin: 1.3rem 0 2.1rem; }
-    .chip { background: white; border: 1px solid var(--line); border-radius: 999px; color: #4e605b; font-size: .76rem; padding: .5rem .72rem; }
     div[data-testid="stForm"] { background: white; border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.35rem 1.45rem; }
     div[data-testid="stMetric"] { background: white; border: 1px solid var(--line); border-radius: 14px; padding: .8rem 1rem; }
     .result-card { background: #102a24; border-radius: 18px; color: white; padding: 1.45rem 1.55rem; margin-bottom: 1rem; }
     .result-card .label { color: #b7d0c8; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
     .result-card .number { font-size: 3.35rem; font-weight: 650; letter-spacing: -.05em; margin: .25rem 0; }
     .result-card .caption { color: #d7e4e0; line-height: 1.5; }
-    .notice { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 9px; color: var(--accent-dark); padding: .85rem 1rem; line-height: 1.55; }
     .muted-card { background: white; border: 1px solid var(--line); border-radius: 14px; color: var(--muted); padding: 1rem 1.1rem; line-height: 1.55; }
-    .formula { background: #102a24; border-radius: 14px; color: #eaf3f0; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8rem; line-height: 1.7; padding: 1rem 1.1rem; overflow-wrap: anywhere; }
     .footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .76rem; line-height: 1.6; margin-top: 2.8rem; padding-top: 1.1rem; }
     .stButton > button, .stFormSubmitButton > button { border-radius: 10px; font-weight: 700; }
     .stFormSubmitButton > button { background: var(--accent); color: white; border-color: var(--accent); }
@@ -85,18 +79,6 @@ st.markdown(
     "stroke treated with endovascular thrombectomy.</p>",
     unsafe_allow_html=True,
 )
-st.markdown(
-    """
-    <div class="chip-row">
-      <span class="chip">7 routinely available predictors</span>
-      <span class="chip">552-patient primary cohort</span>
-      <span class="chip">124-patient external cohort</span>
-      <span class="chip">External AUC 0.809</span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
 input_column, result_column = st.columns([1.55, 0.85], gap="large")
 
 with input_column:
@@ -125,7 +107,7 @@ with input_column:
         with right:
             crp = st.number_input(
                 "4. C-reactive protein (mg/L)", min_value=0.0, max_value=500.0,
-                value=None, step=0.1, format="%.1f", placeholder="e.g., 10.0",
+                value=None, step=0.01, format="%.2f", placeholder="e.g., 10.00",
                 help=predictors["crp"]["timing"],
             )
             neutrophil = st.number_input(
@@ -179,13 +161,6 @@ with result_column:
             metric_left, metric_right = st.columns(2)
             metric_left.metric("Probability", f"{probability:.6f}")
             metric_right.metric("Linear predictor", f"{linear_predictor:.3f}")
-            st.markdown(
-                '<div class="notice"><strong>Interpret as a probability, not a '
-                "directive.</strong> No low/intermediate/high categories are imposed. "
-                "The study’s 0.50 threshold was descriptive, not an established "
-                "clinical decision threshold.</div>",
-                unsafe_allow_html=True,
-            )
     else:
         st.markdown(
             '<div class="muted-card"><strong>No result yet.</strong><br>Complete all '
@@ -211,13 +186,24 @@ with details_left:
         "in other settings."
     )
 with details_right:
-    equation = (
-        "LP = −3.261854950250 + 0.027956881229×Age "
-        "− 0.022379601582×Lymphocyte + 0.068403101354×Neutrophil "
-        "+ 0.003783356189×CRP + 0.046180231591×NIHSS "
-        "+ 0.994514705102×END + 1.296954431745×Cerebral edema"
-    )
-    st.markdown(f'<div class="formula">{html.escape(equation)}<br><br>p = 1 / (1 + exp(−LP))</div>', unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown("**Linear predictor**")
+        st.latex(
+            r"""
+            \begin{aligned}
+            \mathrm{LP} ={}& -3.261854950250 \\
+            &+ 0.027956881229\,(\mathrm{Age}) \\
+            &- 0.022379601582\,(\mathrm{Lymphocyte}) \\
+            &+ 0.068403101354\,(\mathrm{Neutrophil}) \\
+            &+ 0.003783356189\,(\mathrm{CRP}) \\
+            &+ 0.046180231591\,(\mathrm{NIHSS}) \\
+            &+ 0.994514705102\,(\mathrm{END}) \\
+            &+ 1.296954431745\,(\mathrm{Cerebral\ edema})
+            \end{aligned}
+            """
+        )
+        st.markdown("**Predicted probability**")
+        st.latex(r"\displaystyle p=\frac{1}{1+e^{-\mathrm{LP}}}")
 
 with st.expander("Intended population and predictor definitions"):
     st.markdown(
@@ -235,21 +221,6 @@ with st.expander("Intended population and predictor definitions"):
 
         Laboratory predictors are collected within 24 hours after EVT. The NIHSS score
         is assessed before EVT.
-        """
-    )
-
-with st.expander("Responsible use and limitations"):
-    st.markdown(
-        """
-        - Use for early prognostic reassessment and research replication alongside
-          professional clinical judgment.
-        - Do not use for EVT eligibility, causal treatment-effect estimation, or as the
-          sole basis for treatment limitation or withdrawal.
-        - The retrospective model was developed at one center and externally validated
-          at one independent center with a modest sample size.
-        - Cerebral edema was retrospectively identified rather than centrally adjudicated.
-        - Transportability to other populations, workflows, and healthcare systems is
-          not yet established.
         """
     )
 
