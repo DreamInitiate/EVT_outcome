@@ -18,33 +18,93 @@ st.markdown(
     """
     <style>
     :root {
-      --ink: #142522;
-      --muted: #60706b;
-      --accent: #0f6b57;
-      --accent-dark: #094c3e;
-      --accent-soft: #e8f3ee;
-      --line: #dce5e0;
-      --paper: #f6f8f5;
+      --evt-accent: #0f6b57;
+      --evt-hover: #094c3e;
+      --evt-line: rgba(128, 128, 128, .34);
+      --evt-surface: rgba(128, 128, 128, .10);
     }
-    .stApp { background: var(--paper); color: var(--ink); }
-    [data-testid="stHeader"] { background: rgba(246,248,245,.88); }
-    [data-testid="stSidebar"] { background: #eef3ef; border-right: 1px solid var(--line); }
     .block-container { max-width: 1180px; padding-top: 2.6rem; padding-bottom: 4rem; }
-    h1, h2, h3 { letter-spacing: -.025em; }
+    h1, h2, h3 { color: inherit !important; letter-spacing: -.025em; }
     h1 { font-size: clamp(2.35rem, 5vw, 4.4rem) !important; line-height: 1.02 !important; }
-    .eyebrow { color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-    .lead { color: var(--muted); font-size: 1.08rem; line-height: 1.65; max-width: 760px; }
-    div[data-testid="stForm"] { background: white; border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.35rem 1.45rem; }
-    div[data-testid="stMetric"] { background: white; border: 1px solid var(--line); border-radius: 14px; padding: .8rem 1rem; }
+    .eyebrow {
+      display: inline-block;
+      background: var(--evt-accent);
+      border-radius: 999px;
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      padding: .38rem .68rem;
+      text-transform: uppercase;
+    }
+    .lead { color: inherit; font-size: 1.08rem; line-height: 1.65; max-width: 760px; opacity: .72; }
+    div[data-testid="stForm"] {
+      background: transparent !important;
+      border: 1px solid var(--evt-line) !important;
+      border-radius: 18px;
+      padding: 1.25rem 1.35rem 1.45rem;
+    }
+    div[data-testid="stMetric"] {
+      background: var(--evt-surface) !important;
+      border: 1px solid var(--evt-line);
+      border-radius: 14px;
+      padding: .8rem 1rem;
+    }
+    [data-testid="stWidgetLabel"],
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stCaptionContainer"],
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricValue"] {
+      color: inherit !important;
+    }
+    [data-testid="stCaptionContainer"] { opacity: .72; }
+    [data-testid="stNumberInput"] input {
+      background: var(--evt-surface) !important;
+      color: inherit !important;
+      -webkit-text-fill-color: currentColor !important;
+    }
+    [data-testid="stNumberInput"] input::placeholder {
+      color: inherit !important;
+      -webkit-text-fill-color: currentColor !important;
+      opacity: .56 !important;
+    }
+    [data-testid="stNumberInput"] button,
+    [data-testid="stTooltipIcon"] {
+      color: inherit !important;
+      opacity: .72;
+    }
+    [data-testid="stTooltipIcon"] svg {
+      fill: currentColor !important;
+      stroke: currentColor !important;
+    }
+    [data-testid="stRadio"] label,
+    [data-testid="stRadio"] label p {
+      color: inherit !important;
+    }
+    [data-testid="stVerticalBlockBorderWrapper"] {
+      border-color: var(--evt-line) !important;
+    }
+    .katex { color: inherit !important; }
     .result-card { background: #102a24; border-radius: 18px; color: white; padding: 1.45rem 1.55rem; margin-bottom: 1rem; }
     .result-card .label { color: #b7d0c8; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
     .result-card .number { font-size: 3.35rem; font-weight: 650; letter-spacing: -.05em; margin: .25rem 0; }
     .result-card .caption { color: #d7e4e0; line-height: 1.5; }
-    .muted-card { background: white; border: 1px solid var(--line); border-radius: 14px; color: var(--muted); padding: 1rem 1.1rem; line-height: 1.55; }
-    .footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .76rem; line-height: 1.6; margin-top: 2.8rem; padding-top: 1.1rem; }
+    .muted-card { background: var(--evt-surface); border: 1px solid var(--evt-line); border-radius: 14px; color: inherit; padding: 1rem 1.1rem; line-height: 1.55; }
+    .muted-card { opacity: .82; }
+    .footer { border-top: 1px solid var(--evt-line); color: inherit; font-size: .76rem; line-height: 1.6; margin-top: 2.8rem; opacity: .72; padding-top: 1.1rem; }
     .stButton > button, .stFormSubmitButton > button { border-radius: 10px; font-weight: 700; }
-    .stFormSubmitButton > button { background: var(--accent); color: white; border-color: var(--accent); }
-    .stFormSubmitButton > button:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: white; }
+    .stFormSubmitButton > button { background: var(--evt-accent); color: white; border-color: var(--evt-accent); }
+    .stFormSubmitButton > button:hover { background: var(--evt-hover); border-color: var(--evt-hover); color: white; }
+    @media (prefers-contrast: more) {
+      :root {
+        --evt-line: rgba(128, 128, 128, .72);
+        --evt-surface: rgba(128, 128, 128, .18);
+      }
+      .lead, .muted-card, .footer, [data-testid="stCaptionContainer"] { opacity: 1; }
+      [data-testid="stNumberInput"] input::placeholder { opacity: .82 !important; }
+    }
     </style>
     """,
     unsafe_allow_html=True,

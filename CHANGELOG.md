@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Made custom colors follow Streamlit's active Light, Dark, or System theme and
+  strengthened contrast for labels, inputs, placeholders, icons, cards, and equations.
 - Replaced the plain-text model equation with aligned mathematical notation.
 - Changed the CRP input precision and step size from one to two decimal places.
 - Removed the four summary badges from the page header.
