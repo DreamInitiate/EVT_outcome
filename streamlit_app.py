@@ -1,0 +1,266 @@
+"""Streamlit interface for the locked early post-EVT outcome model."""
+
+from __future__ import annotations
+
+import html
+
+import streamlit as st
+
+from model import MODEL, predict, validate_plausibility
+
+
+st.set_page_config(
+    page_title="EVT 90-Day Outcome Calculator",
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+st.markdown(
+    """
+    <style>
+    :root {
+      --ink: #142522;
+      --muted: #60706b;
+      --accent: #0f6b57;
+      --accent-dark: #094c3e;
+      --accent-soft: #e8f3ee;
+      --line: #dce5e0;
+      --paper: #f6f8f5;
+    }
+    .stApp { background: var(--paper); color: var(--ink); }
+    [data-testid="stHeader"] { background: rgba(246,248,245,.88); }
+    [data-testid="stSidebar"] { background: #eef3ef; border-right: 1px solid var(--line); }
+    .block-container { max-width: 1180px; padding-top: 2.6rem; padding-bottom: 4rem; }
+    h1, h2, h3 { letter-spacing: -.025em; }
+    h1 { font-size: clamp(2.35rem, 5vw, 4.4rem) !important; line-height: 1.02 !important; }
+    .eyebrow { color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .lead { color: var(--muted); font-size: 1.08rem; line-height: 1.65; max-width: 760px; }
+    .chip-row { display: flex; gap: .55rem; flex-wrap: wrap; margin: 1.3rem 0 2.1rem; }
+    .chip { background: white; border: 1px solid var(--line); border-radius: 999px; color: #4e605b; font-size: .76rem; padding: .5rem .72rem; }
+    div[data-testid="stForm"] { background: white; border: 1px solid var(--line); border-radius: 18px; padding: 1.25rem 1.35rem 1.45rem; }
+    div[data-testid="stMetric"] { background: white; border: 1px solid var(--line); border-radius: 14px; padding: .8rem 1rem; }
+    .result-card { background: #102a24; border-radius: 18px; color: white; padding: 1.45rem 1.55rem; margin-bottom: 1rem; }
+    .result-card .label { color: #b7d0c8; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .result-card .number { font-size: 3.35rem; font-weight: 650; letter-spacing: -.05em; margin: .25rem 0; }
+    .result-card .caption { color: #d7e4e0; line-height: 1.5; }
+    .notice { background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 9px; color: var(--accent-dark); padding: .85rem 1rem; line-height: 1.55; }
+    .muted-card { background: white; border: 1px solid var(--line); border-radius: 14px; color: var(--muted); padding: 1rem 1.1rem; line-height: 1.55; }
+    .formula { background: #102a24; border-radius: 14px; color: #eaf3f0; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8rem; line-height: 1.7; padding: 1rem 1.1rem; overflow-wrap: anywhere; }
+    .footer { border-top: 1px solid var(--line); color: var(--muted); font-size: .76rem; line-height: 1.6; margin-top: 2.8rem; padding-top: 1.1rem; }
+    .stButton > button, .stFormSubmitButton > button { border-radius: 10px; font-weight: 700; }
+    .stFormSubmitButton > button { background: var(--accent); color: white; border-color: var(--accent); }
+    .stFormSubmitButton > button:hover { background: var(--accent-dark); border-color: var(--accent-dark); color: white; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+predictors = {item["id"]: item for item in MODEL["predictors"]}
+
+with st.sidebar:
+    st.markdown("### EVT Outcome Calculator")
+    st.caption(f"Locked model version {MODEL['model_version']}")
+    st.markdown("**Prediction time**  ")
+    st.write("After all required variables from the first 3 days following EVT are available.")
+    st.markdown("**Outcome**  ")
+    st.write("90-day unfavorable functional outcome: modified Rankin Scale score 3–6.")
+    st.divider()
+    st.warning(
+        "Research-use clinical prediction support only. Do not use this calculator "
+        "alone to select treatment or to reduce or withdraw care."
+    )
+    st.caption(
+        "Community Cloud processes entered values on its server for the active "
+        "session. This app contains no database, analytics, or application-level "
+        "logging. Do not enter names, identifiers, or other protected health information."
+    )
+
+st.markdown('<div class="eyebrow">3-day post-EVT reassessment</div>', unsafe_allow_html=True)
+st.title("Estimate 90-day unfavorable functional outcome probability")
+st.markdown(
+    '<p class="lead">An externally validated, fixed-coefficient logistic regression '
+    "model for adults with anterior circulation large-vessel-occlusion ischemic "
+    "stroke treated with endovascular thrombectomy.</p>",
+    unsafe_allow_html=True,
+)
+st.markdown(
+    """
+    <div class="chip-row">
+      <span class="chip">7 routinely available predictors</span>
+      <span class="chip">552-patient primary cohort</span>
+      <span class="chip">124-patient external cohort</span>
+      <span class="chip">External AUC 0.809</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+input_column, result_column = st.columns([1.55, 0.85], gap="large")
+
+with input_column:
+    st.subheader("Patient inputs")
+    st.caption(
+        "Enter all seven predictors using the stated units and timing. The displayed "
+        "limits are broad plausibility guardrails, not the observed training ranges."
+    )
+    with st.form("calculator_form", border=True):
+        left, right = st.columns(2, gap="medium")
+        with left:
+            age = st.number_input(
+                "1. Age (years)", min_value=18, max_value=110, value=None, step=1,
+                placeholder="e.g., 70",
+            )
+            lymphocyte = st.number_input(
+                "2. Lymphocyte count (×10⁹/L)", min_value=0.0, max_value=10.0,
+                value=None, step=0.01, format="%.2f", placeholder="e.g., 1.50",
+                help=predictors["lymphocyte"]["timing"],
+            )
+            nihss = st.number_input(
+                "3. Preprocedural NIHSS score (points)", min_value=0, max_value=42,
+                value=None, step=1, placeholder="e.g., 15",
+                help=predictors["nihss"]["timing"],
+            )
+        with right:
+            crp = st.number_input(
+                "4. C-reactive protein (mg/L)", min_value=0.0, max_value=500.0,
+                value=None, step=0.1, format="%.1f", placeholder="e.g., 10.0",
+                help=predictors["crp"]["timing"],
+            )
+            neutrophil = st.number_input(
+                "5. Neutrophil count (×10⁹/L)", min_value=0.0, max_value=50.0,
+                value=None, step=0.01, format="%.2f", placeholder="e.g., 7.50",
+                help=predictors["neutrophil"]["timing"],
+            )
+            end_label = st.radio(
+                "6. Early neurological deterioration (END)", ["No", "Yes"],
+                horizontal=True, help=predictors["end"]["definition"],
+            )
+            edema_label = st.radio(
+                "7. Cerebral edema", ["No", "Yes"], horizontal=True,
+                help=predictors["cerebral_edema"]["definition"],
+            )
+        submitted = st.form_submit_button(
+            "Calculate predicted probability", use_container_width=True, type="primary"
+        )
+
+    values = {
+        "age": age,
+        "crp": crp,
+        "lymphocyte": lymphocyte,
+        "neutrophil": neutrophil,
+        "nihss": nihss,
+        "end": 1 if end_label == "Yes" else 0,
+        "cerebral_edema": 1 if edema_label == "Yes" else 0,
+    }
+
+with result_column:
+    st.subheader("Model output")
+    if submitted:
+        errors = validate_plausibility(values)
+        if errors:
+            for error in errors:
+                st.error(error)
+        else:
+            linear_predictor, probability = predict(values)
+            st.markdown(
+                f"""
+                <div class="result-card">
+                  <div class="label">Predicted probability</div>
+                  <div class="number">{probability * 100:.1f}%</div>
+                  <div class="caption">Estimated probability of a 90-day modified
+                  Rankin Scale score of 3–6.</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.progress(probability)
+            metric_left, metric_right = st.columns(2)
+            metric_left.metric("Probability", f"{probability:.6f}")
+            metric_right.metric("Linear predictor", f"{linear_predictor:.3f}")
+            st.markdown(
+                '<div class="notice"><strong>Interpret as a probability, not a '
+                "directive.</strong> No low/intermediate/high categories are imposed. "
+                "The study’s 0.50 threshold was descriptive, not an established "
+                "clinical decision threshold.</div>",
+                unsafe_allow_html=True,
+            )
+    else:
+        st.markdown(
+            '<div class="muted-card"><strong>No result yet.</strong><br>Complete all '
+            "five numeric inputs, select the two binary predictors, and choose "
+            "Calculate predicted probability.</div>",
+            unsafe_allow_html=True,
+        )
+
+st.divider()
+st.subheader("Model transparency")
+details_left, details_right = st.columns([0.9, 1.1], gap="large")
+with details_left:
+    st.markdown(
+        "The calculator uses the locked raw-scale coefficients from the final "
+        "L2-regularized logistic regression model. It performs no model fitting or "
+        "recalibration. Internal validation AUC was **0.784** with Brier score "
+        "**0.186**; independent external validation AUC was **0.809** with Brier "
+        "score **0.184**."
+    )
+    st.info(
+        "The external calibration slope was 1.636. Broader multicenter validation "
+        "and, where appropriate, local recalibration are required before routine use "
+        "in other settings."
+    )
+with details_right:
+    equation = (
+        "LP = −3.261854950250 + 0.027956881229×Age "
+        "− 0.022379601582×Lymphocyte + 0.068403101354×Neutrophil "
+        "+ 0.003783356189×CRP + 0.046180231591×NIHSS "
+        "+ 0.994514705102×END + 1.296954431745×Cerebral edema"
+    )
+    st.markdown(f'<div class="formula">{html.escape(equation)}<br><br>p = 1 / (1 + exp(−LP))</div>', unsafe_allow_html=True)
+
+with st.expander("Intended population and predictor definitions"):
+    st.markdown(
+        """
+        **Intended population:** Adults with anterior circulation large-vessel-occlusion
+        acute ischemic stroke treated with EVT, pre-stroke mRS 0–1, and evaluable after
+        the first 3 postprocedural days.
+
+        **END:** Increase of at least 2 NIHSS points within 3 days after EVT compared
+        with the preprocedural score. Code No=0 and Yes=1.
+
+        **Cerebral edema:** Evaluated within 3 days after EVT and diagnosed by
+        neurologists according to postoperative CT reports together with corresponding
+        clinical manifestations. Code No=0 and Yes=1.
+
+        Laboratory predictors are collected within 24 hours after EVT. The NIHSS score
+        is assessed before EVT.
+        """
+    )
+
+with st.expander("Responsible use and limitations"):
+    st.markdown(
+        """
+        - Use for early prognostic reassessment and research replication alongside
+          professional clinical judgment.
+        - Do not use for EVT eligibility, causal treatment-effect estimation, or as the
+          sole basis for treatment limitation or withdrawal.
+        - The retrospective model was developed at one center and externally validated
+          at one independent center with a modest sample size.
+        - Cerebral edema was retrospectively identified rather than centrally adjudicated.
+        - Transportability to other populations, workflows, and healthcare systems is
+          not yet established.
+        """
+    )
+
+st.markdown(
+    f"""
+    <div class="footer">
+      <strong>Research-use clinical prediction support.</strong> Model v{MODEL['model_version']} ·
+      MIT-licensed code · No database, analytics, cookies, or application-level logging.
+      Community Cloud values are processed server-side during the active session; do not
+      enter direct patient identifiers.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

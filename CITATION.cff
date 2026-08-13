@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this calculator, please cite the archived software release and the associated article."
+title: "EVT 90-Day Outcome Calculator"
+type: software
+version: 1.0.0
+date-released: 2026-08-13
+authors:
+  - family-names: "TO-BE-UPDATED"
+    given-names: "TO-BE-UPDATED"
+license: MIT
+repository-code: "https://github.com/TO-BE-UPDATED/evt-outcome-calculator"
+url: "https://TO-BE-UPDATED.streamlit.app/"
+abstract: "Open-source Streamlit implementation of a fixed-coefficient logistic regression model for 90-day unfavorable functional outcome after endovascular thrombectomy."
+keywords:
+  - stroke
+  - endovascular thrombectomy
+  - logistic regression
+  - clinical prediction model
+  - Streamlit
