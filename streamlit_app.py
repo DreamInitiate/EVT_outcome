@@ -96,10 +96,10 @@ st.markdown(
       overflow-y: hidden;
       padding-bottom: .12rem;
     }
-    .result-card { background: #102a24; border-radius: 18px; color: white; padding: 1.45rem 1.55rem; margin-bottom: 1rem; }
+    .result-card { background: #102a24; border-radius: 16px; color: white; padding: 1rem 1.15rem; margin-bottom: .65rem; }
     .result-card .label { color: #b7d0c8; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-    .result-card .number { font-size: 3.35rem; font-weight: 650; letter-spacing: -.05em; margin: .25rem 0; }
-    .result-card .caption { color: #d7e4e0; line-height: 1.5; }
+    .result-card .number { font-size: 2.75rem; font-weight: 650; letter-spacing: -.05em; line-height: 1; margin: .28rem 0 .38rem; }
+    .result-card .caption { color: #d7e4e0; font-size: .92rem; line-height: 1.4; }
     .muted-card { background: var(--evt-surface); border: 1px solid var(--evt-line); border-radius: 14px; color: inherit; padding: 1rem 1.1rem; line-height: 1.55; }
     .muted-card { opacity: .82; }
     .footer { border-top: 1px solid var(--evt-line); color: inherit; font-size: .76rem; line-height: 1.6; margin-top: 2.8rem; opacity: .72; padding-top: 1.1rem; }

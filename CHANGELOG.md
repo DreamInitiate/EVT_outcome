@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Reduced the result-card height and tightened its typography while preserving a prominent probability display.
 - Moved the model summary into the sidebar and reorganized the calculator into a more balanced input/output layout, with the locked equation placed directly below the output.
 - Simplified the result panel by removing the secondary Probability and Linear predictor metric cards; the prominent percentage result and model formula remain available.
 
