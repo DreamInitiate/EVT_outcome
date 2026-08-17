@@ -218,9 +218,6 @@ with result_column:
                 unsafe_allow_html=True,
             )
             st.progress(probability)
-            metric_left, metric_right = st.columns(2)
-            metric_left.metric("Probability", f"{probability:.6f}")
-            metric_right.metric("Linear predictor", f"{linear_predictor:.3f}")
     else:
         st.markdown(
             '<div class="muted-card"><strong>No result yet.</strong><br>Complete all '

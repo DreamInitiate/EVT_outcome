@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Simplified the result panel by removing the secondary Probability and Linear predictor metric cards; the prominent percentage result and model formula remain available.
+
 - Made custom colors follow Streamlit's active Light, Dark, or System theme and
   strengthened contrast for labels, inputs, placeholders, icons, cards, and equations.
 - Replaced the plain-text model equation with aligned mathematical notation.
