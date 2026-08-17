@@ -87,6 +87,15 @@ st.markdown(
       border-color: var(--evt-line) !important;
     }
     .katex { color: inherit !important; }
+    [data-testid="stSidebar"] .model-summary { line-height: 1.55; opacity: .82; }
+    .equation-note { font-size: .82rem; line-height: 1.45; opacity: .72; }
+    .st-key-equation_panel .katex { font-size: .90em !important; }
+    .st-key-equation_panel .katex-display {
+      margin: .7rem 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: .12rem;
+    }
     .result-card { background: #102a24; border-radius: 18px; color: white; padding: 1.45rem 1.55rem; margin-bottom: 1rem; }
     .result-card .label { color: #b7d0c8; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
     .result-card .number { font-size: 3.35rem; font-weight: 650; letter-spacing: -.05em; margin: .25rem 0; }
@@ -116,6 +125,14 @@ predictors = {item["id"]: item for item in MODEL["predictors"]}
 with st.sidebar:
     st.markdown("### EVT Outcome Calculator")
     st.caption(f"Locked model version {MODEL['model_version']}")
+    st.markdown(
+        '<p class="model-summary">An externally validated, fixed-coefficient '
+        "logistic regression model for adults with anterior circulation "
+        "large-vessel-occlusion ischemic stroke treated with endovascular "
+        "thrombectomy.</p>",
+        unsafe_allow_html=True,
+    )
+    st.divider()
     st.markdown("**Prediction time**  ")
     st.write("After all required variables from the first 3 days following EVT are available.")
     st.markdown("**Outcome**  ")
@@ -133,13 +150,9 @@ with st.sidebar:
 
 st.markdown('<div class="eyebrow">3-day post-EVT reassessment</div>', unsafe_allow_html=True)
 st.title("Estimate 90-day unfavorable functional outcome probability")
-st.markdown(
-    '<p class="lead">An externally validated, fixed-coefficient logistic regression '
-    "model for adults with anterior circulation large-vessel-occlusion ischemic "
-    "stroke treated with endovascular thrombectomy.</p>",
-    unsafe_allow_html=True,
+input_column, result_column = st.columns(
+    [1.35, 1], gap="large", vertical_alignment="top"
 )
-input_column, result_column = st.columns([1.55, 0.85], gap="large")
 
 with input_column:
     st.subheader("Patient inputs")
@@ -205,7 +218,7 @@ with result_column:
             for error in errors:
                 st.error(error)
         else:
-            linear_predictor, probability = predict(values)
+            _, probability = predict(values)
             st.markdown(
                 f"""
                 <div class="result-card">
@@ -226,25 +239,12 @@ with result_column:
             unsafe_allow_html=True,
         )
 
-st.divider()
-st.subheader("Model transparency")
-details_left, details_right = st.columns([0.9, 1.1], gap="large")
-with details_left:
-    st.markdown(
-        "The calculator uses the locked raw-scale coefficients from the final "
-        "L2-regularized logistic regression model. It performs no model fitting or "
-        "recalibration. Internal validation AUC was **0.784** with Brier score "
-        "**0.186**; independent external validation AUC was **0.809** with Brier "
-        "score **0.184**."
-    )
-    st.info(
-        "The external calibration slope was 1.636. Broader multicenter validation "
-        "and, where appropriate, local recalibration are required before routine use "
-        "in other settings."
-    )
-with details_right:
-    with st.container(border=True):
+    with st.container(border=True, key="equation_panel"):
         st.markdown("**Linear predictor**")
+        st.markdown(
+            '<div class="equation-note">Locked raw-scale model equation</div>',
+            unsafe_allow_html=True,
+        )
         st.latex(
             r"""
             \begin{aligned}
@@ -261,6 +261,21 @@ with details_right:
         )
         st.markdown("**Predicted probability**")
         st.latex(r"\displaystyle p=\frac{1}{1+e^{-\mathrm{LP}}}")
+
+st.divider()
+st.subheader("Model transparency")
+st.markdown(
+    "The calculator uses the locked raw-scale coefficients from the final "
+    "L2-regularized logistic regression model. It performs no model fitting or "
+    "recalibration. Internal validation AUC was **0.784** with Brier score "
+    "**0.186**; independent external validation AUC was **0.809** with Brier "
+    "score **0.184**."
+)
+st.info(
+    "The external calibration slope was 1.636. Broader multicenter validation "
+    "and, where appropriate, local recalibration are required before routine use "
+    "in other settings."
+)
 
 with st.expander("Intended population and predictor definitions"):
     st.markdown(

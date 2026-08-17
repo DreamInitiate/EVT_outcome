@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Moved the model summary into the sidebar and reorganized the calculator into a more balanced input/output layout, with the locked equation placed directly below the output.
 - Simplified the result panel by removing the secondary Probability and Linear predictor metric cards; the prominent percentage result and model formula remain available.
 
 - Made custom colors follow Streamlit's active Light, Dark, or System theme and
